@@ -11,14 +11,8 @@ import tf
 import cv2
 import yaml
 import math
-import numpy as np
 
 STATE_COUNT_THRESHOLD = 3
-WINDOW_NAME = "Traffic Light Detection Result"
-WINDOW_SIZE = 500
-RADIUS = 200
-
-Singal_Color = None
 
 class TLDetector(object):
     def __init__(self):
@@ -154,28 +148,12 @@ class TLDetector(object):
             int: ID of traffic light color (specified in styx_msgs/TrafficLight)
 
         """
-        singal_image = np.zeros((500, 500,3), np.uint8)
-        if TrafficLight.RED:
-            Singal_Color = (0,0,255)
-        else:
-            Singal_Color = (0,255,0)
-
-        # No traffic light
         if(not self.has_image):
             self.prev_light_loc = None
-            singal_image = cv2.putText(singal_image,"No singal!",(50,250),cv2.FONT_HERSHEY_COMPLEX,1,(255,0,0))
-            cv2.imshow(WINDOW_NAME, singal_image)
-            cv2.waitKey(0)
-            cv2.destroyWindow(WINDOW_NAME)
             return False
-        # A traffic light
-        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8") # ROS image change to OpenCV image
 
-        singal_image = cv2.circle(singal_image, (WINDOW_SIZE / 2, WINDOW_SIZE / 2), RADIUS, Singal_Color, -1)
-        # singal_image = cv2.putText(singal_image, "A singal detected.", (50, 250), cv2.FONT_HERSHEY_COMPLEX, 1,(255, 0, 0))
-        cv2.imshow(WINDOW_NAME, singal_image)
-        cv2.waitKey(0)
-        cv2.destroyWindow()
+        cv_image = self.bridge.imgmsg_to_cv2(self.camera_image, "bgr8")
+
         #Get classification
         return self.light_classifier.get_classification(cv_image)
 
@@ -195,15 +173,13 @@ class TLDetector(object):
         if(self.pose and self.waypoints):
             car_position_index = self.get_closest_waypoint(self.pose.pose)
 
+            #TODO find the closest visible traffic light (if one exists)
 
-
-        #TODO find the closest visible traffic light (if one exists)
-
-        for traffic_light_waypoint_indexe in self.traffic_light_waypoint_indexes:
-            if traffic_light_waypoint_indexe > car_position_index:
-                light = True
-                light_wp = traffic_light_waypoint_indexe
-                break
+            for traffic_light_waypoint_indexe in self.traffic_light_waypoint_indexes:
+                if traffic_light_waypoint_indexe > car_position_index:
+                    light = True
+                    light_wp = traffic_light_waypoint_indexe
+                    break
 
         if light:
             state = self.get_light_state(light)
@@ -212,9 +188,7 @@ class TLDetector(object):
         return -1, TrafficLight.UNKNOWN
 
 if __name__ == '__main__':
-
     try:
         TLDetector()
-
     except rospy.ROSInterruptException:
         rospy.logerr('Could not start traffic node.')
